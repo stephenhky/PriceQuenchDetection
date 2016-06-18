@@ -30,8 +30,9 @@ def train_prediction_model(prices,
                                                                  annotations,
                                                                  window_size=window_size,
                                                                  future_window=future_window)
+    prices_vectors = np.reshape(prices_vectors, prices_vectors.shape+(1,))
     model = Sequential()
-    model.add(LSTM(window_size, input_shape=(window_size, window_size), dropout_W=0.2, dropout_U=0.2))
+    model.add(LSTM(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
 
