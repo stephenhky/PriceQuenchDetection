@@ -42,3 +42,50 @@ def train_prediction_model(prices,
               batch_size=batch_size, nb_epoch=15)
 
     return model
+
+def pricequench_predict(prices, model):
+    pr = np.array([prices])
+    pr = np.reshape(pr, pr.shape+(1,))
+    return model.predict(pr)
+
+def evaluate(prices, model,
+             divide_threshold=0.5,
+             window_size=20,
+             future_window=5,  # number of days to include
+             drop_threshold=0.01,  # drop threshold
+             drop_window=2,  # drop window
+             percentage=True,  # use percentage if True; otherwise, absolute number
+             ):
+    annotations = ann.annotate_sharpdrop(prices,
+                                         future_window=future_window,
+                                         drop_threshold=drop_threshold,
+                                         drop_window=drop_window,
+                                         percentage=percentage)
+    vectors, annots = wrangling_pricevector(prices,
+                                            annotations,
+                                            window_size=window_size,
+                                            future_window=future_window
+                                           )
+    predprobs = map(lambda pr: pricequench_predict(pr, model), vectors)
+    predlabels = map(int, map(lambda elem: elem[0][0]>divide_threshold, predprobs))
+
+    tp = 0
+    fp = 0
+    fn = 0
+    tn = 0
+    for expannot, predannot in zip(annots, predlabels):
+        if expannot==1 and predannot==1:
+            tp += 1
+        elif expannot==1 and predannot==0:
+            fn += 1
+        elif expannot==0 and predannot==1:
+            fp += 1
+        else:
+            tn += 1
+    recall = float(tp)/(tp+fn)
+    precision = float(tp)/(tp+fp)
+    fscore = 2*recall*precision/(recall+precision)
+    print "tp = ", tp, "fp = ", fp, "fn = ", fn, "tn = ", tn
+    print "recall = ", recall
+    print "precision = ", precision
+    print "F-score = ", fscore
