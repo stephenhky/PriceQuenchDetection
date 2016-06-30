@@ -15,9 +15,9 @@ def wrangling_pricevector(prices,
 
 def train_prediction_model(prices,
                            window_size=20,
-                           future_window=5,  # number of days to include
+                           future_window=10,  # number of days to include
                            drop_threshold=0.01,  # drop threshold
-                           drop_window=2,  # drop window
+                           drop_window=5,  # drop window
                            percentage=True,  # use percentage if True; otherwise, absolute number
                            batch_size=32
                            ):
@@ -51,9 +51,9 @@ def pricequench_predict(prices, model):
 def evaluate(prices, model,
              divide_threshold=0.5,
              window_size=20,
-             future_window=5,  # number of days to include
+             future_window=10,  # number of days to include
              drop_threshold=0.01,  # drop threshold
-             drop_window=2,  # drop window
+             drop_window=5,  # drop window
              percentage=True,  # use percentage if True; otherwise, absolute number
              ):
     annotations = ann.annotate_sharpdrop(prices,
