@@ -1,8 +1,27 @@
 import numpy as np
-import PriceQuenchAnnotation as ann
 from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
+
+
+def annotate_sharpdrop(prices,  # ndarray
+                       future_window=10,  # number of days to include
+                       drop_threshold=0.01,  # drop threshold
+                       drop_window=5,  # drop window
+                       percentage=True  # use percentage if True; otherwise, absolute number
+                       ):
+    "Return 1 if there will be a sharp drop; 0 if not; -1 if invalid."
+    flags = np.repeat(-1, len(prices))
+    for idx in range(0, len(prices) - future_window):
+        flag = 0
+        for kdx in range(idx, idx + future_window - drop_window):
+            absdrop = prices[idx] - prices[idx + drop_window - 1]
+            if absdrop / (prices[idx] if percentage else 1) > drop_threshold:
+                flag = 1
+            if flag > 0: break
+        flags[idx] = flag
+    return flags
+
 
 def wrangling_pricevector(prices,
                           annotation,
@@ -21,11 +40,11 @@ def train_prediction_model(prices,
                            percentage=True,  # use percentage if True; otherwise, absolute number
                            batch_size=32
                            ):
-    annotations = ann.annotate_sharpdrop(prices,
-                                         future_window=future_window,
-                                         drop_threshold=drop_threshold,
-                                         drop_window=drop_window,
-                                         percentage=percentage)
+    annotations = deepmodels.PriceQuenchPrediction.annotate_sharpdrop(prices,
+                                                                      future_window=future_window,
+                                                                      drop_threshold=drop_threshold,
+                                                                      drop_window=drop_window,
+                                                                      percentage=percentage)
     prices_vectors, wrangled_annotations = wrangling_pricevector(prices,
                                                                  annotations,
                                                                  window_size=window_size,
@@ -56,11 +75,11 @@ def evaluate(prices, model,
              drop_window=5,  # drop window
              percentage=True,  # use percentage if True; otherwise, absolute number
              ):
-    annotations = ann.annotate_sharpdrop(prices,
-                                         future_window=future_window,
-                                         drop_threshold=drop_threshold,
-                                         drop_window=drop_window,
-                                         percentage=percentage)
+    annotations = deepmodels.PriceQuenchPrediction.annotate_sharpdrop(prices,
+                                                                      future_window=future_window,
+                                                                      drop_threshold=drop_threshold,
+                                                                      drop_window=drop_window,
+                                                                      percentage=percentage)
     vectors, annots = wrangling_pricevector(prices,
                                             annotations,
                                             window_size=window_size,
@@ -101,3 +120,5 @@ def evaluate(prices, model,
     except ZeroDivisionError:
         fscore = np.inf
     print "F-score = ", fscore
+
+
