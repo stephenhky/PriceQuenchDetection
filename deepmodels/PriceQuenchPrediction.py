@@ -82,10 +82,22 @@ def evaluate(prices, model,
             fp += 1
         else:
             tn += 1
-    recall = float(tp)/(tp+fn)
-    precision = float(tp)/(tp+fp)
-    fscore = 2*recall*precision/(recall+precision)
     print "tp = ", tp, "fp = ", fp, "fn = ", fn, "tn = ", tn
+
+    try:
+        recall = float(tp)/(tp+fn)
+    except ZeroDivisionError:
+        recall = np.inf
     print "recall = ", recall
+
+    try:
+        precision = float(tp)/(tp+fp)
+    except ZeroDivisionError:
+        precision = np.inf
     print "precision = ", precision
+
+    try:
+        fscore = 2*recall*precision/(recall+precision)
+    except ZeroDivisionError:
+        fscore = np.inf
     print "F-score = ", fscore
