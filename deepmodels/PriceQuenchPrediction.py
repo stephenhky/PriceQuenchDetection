@@ -1,13 +1,23 @@
 import numpy as np
-from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
+from keras.models import Sequential
+from evaluation import IRutils
+
+# default parameters
+def_annotation_params = {'future_window': 10,        # number of days to include
+                         'drop_threshold': 0.01,     # drop threshold
+                         'drop_window': 5,           # drop window
+                         'use_percentage': True}     # use percentage if True; otherwise, absolute number
+def_prediction_params = {'window_size': 20,
+                         'divide_threshold': 0.5}
+
 
 def annotate_sharpdrop(prices,  # ndarray
-                       future_window=10,  # number of days to include
-                       drop_threshold=0.01,  # drop threshold
-                       drop_window=5,  # drop window
-                       percentage=True  # use percentage if True; otherwise, absolute number
+                       future_window=def_annotation_params['future_window'],
+                       drop_threshold=def_annotation_params['drop_threshold'],
+                       drop_window=def_annotation_params['drop_window'],
+                       percentage=def_annotation_params['use_percentage']
                        ):
     "Return 1 if there will be a sharp drop; 0 if not; -1 if invalid."
     flags = np.repeat(-1, len(prices))
@@ -24,19 +34,19 @@ def annotate_sharpdrop(prices,  # ndarray
 
 def wrangling_pricevector(prices,
                           annotation,
-                          window_size=20,
-                          future_window=5
+                          window_size=def_prediction_params['window_size'],
+                          future_window=def_annotation_params['future_window']
                          ):
     prices_vectors = np.array([prices[timeidx:(timeidx+window_size)] for timeidx in range(len(prices)-window_size-future_window)])
     wrangled_annotations = np.array([annotation[timeidx+window_size-1] for timeidx in range(len(prices)-window_size-future_window)])
     return prices_vectors, wrangled_annotations
 
 def train_prediction_model(prices,
-                           window_size=20,
-                           future_window=10,  # number of days to include
-                           drop_threshold=0.01,  # drop threshold
-                           drop_window=5,  # drop window
-                           percentage=True,  # use percentage if True; otherwise, absolute number
+                           window_size=def_prediction_params['window_size'],
+                           future_window=def_annotation_params['future_window'],
+                           drop_threshold=def_annotation_params['drop_threshold'],
+                           drop_window=def_annotation_params['drop_window'],
+                           percentage=def_annotation_params['use_percentage'],
                            batch_size=32
                            ):
     annotations = annotate_sharpdrop(prices,
@@ -66,14 +76,14 @@ def pricequench_predict(prices, model):
     pr = np.reshape(pr, pr.shape+(1,))
     return model.predict(pr)
 
-def evaluate(prices, model,
-             divide_threshold=0.5,
-             window_size=20,
-             future_window=10,  # number of days to include
-             drop_threshold=0.01,  # drop threshold
-             drop_window=5,  # drop window
-             percentage=True,  # use percentage if True; otherwise, absolute number
-             ):
+def counts_pn(prices, model,
+              divide_threshold=def_prediction_params['divide_threshold'],
+              window_size=def_prediction_params['window_size'],
+              future_window=def_annotation_params['future_window'],
+              drop_threshold=def_annotation_params['drop_threshold'],
+              drop_window=def_annotation_params['drop_window'],
+              percentage=def_annotation_params['use_percentage']
+              ):
     annotations = annotate_sharpdrop(prices,
                                      future_window=future_window,
                                      drop_threshold=drop_threshold,
@@ -100,24 +110,24 @@ def evaluate(prices, model,
             fp += 1
         else:
             tn += 1
-    print "tp = ", tp, "fp = ", fp, "fn = ", fn, "tn = ", tn
+    return {'tp': tp, 'fp': fp, 'fn': fn, 'tn': tn}
 
-    try:
-        recall = float(tp)/(tp+fn)
-    except ZeroDivisionError:
-        recall = np.inf
-    print "recall = ", recall
-
-    try:
-        precision = float(tp)/(tp+fp)
-    except ZeroDivisionError:
-        precision = np.inf
-    print "precision = ", precision
-
-    try:
-        fscore = 2*recall*precision/(recall+precision)
-    except ZeroDivisionError:
-        fscore = np.inf
-    print "F-score = ", fscore
-
-
+def evaluate(prices, model,
+             divide_threshold=def_prediction_params['divide_threshold'],
+             window_size=def_prediction_params['window_size'],
+             future_window=def_annotation_params['future_window'],
+             drop_threshold=def_annotation_params['drop_threshold'],
+             drop_window=def_annotation_params['drop_window'],
+             percentage=def_annotation_params['use_percentage']):
+    ir_counts = counts_pn(prices, model,
+                          divide_threshold=divide_threshold,
+                          window_size=window_size,
+                          future_window=future_window,
+                          drop_threshold=drop_threshold,
+                          drop_window=drop_window,
+                          percentage=percentage)
+    print "tp = ", ir_counts['tp'], "fp = ", ir_counts['fp'], "fn = ", ir_counts['fn'], "tn = ", ir_counts['tn']
+    ir_measures = IRutils.calculate_IR(**ir_counts)
+    print "recall = ", ir_measures['recall']
+    print "precision = ", ir_measures['precision']
+    print "F-score = ", ir_measures['fscore']
