@@ -131,3 +131,11 @@ def evaluate(prices, model,
     print "recall = ", ir_measures['recall']
     print "precision = ", ir_measures['precision']
     print "F-score = ", ir_measures['fscore']
+
+def evaluate_AUC(prices, model,
+                 window_size=def_prediction_params['window_size'],
+                 future_window=def_annotation_params['future_window'],
+                 drop_threshold=def_annotation_params['drop_threshold'],
+                 drop_window=def_annotation_params['drop_window'],
+                 percentage=def_annotation_params['use_percentage']):
+    pass
