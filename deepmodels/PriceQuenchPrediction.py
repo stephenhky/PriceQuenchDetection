@@ -3,7 +3,6 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 
-
 def annotate_sharpdrop(prices,  # ndarray
                        future_window=10,  # number of days to include
                        drop_threshold=0.01,  # drop threshold
@@ -40,11 +39,11 @@ def train_prediction_model(prices,
                            percentage=True,  # use percentage if True; otherwise, absolute number
                            batch_size=32
                            ):
-    annotations = deepmodels.PriceQuenchPrediction.annotate_sharpdrop(prices,
-                                                                      future_window=future_window,
-                                                                      drop_threshold=drop_threshold,
-                                                                      drop_window=drop_window,
-                                                                      percentage=percentage)
+    annotations = annotate_sharpdrop(prices,
+                                     future_window=future_window,
+                                     drop_threshold=drop_threshold,
+                                     drop_window=drop_window,
+                                     percentage=percentage)
     prices_vectors, wrangled_annotations = wrangling_pricevector(prices,
                                                                  annotations,
                                                                  window_size=window_size,
@@ -75,11 +74,11 @@ def evaluate(prices, model,
              drop_window=5,  # drop window
              percentage=True,  # use percentage if True; otherwise, absolute number
              ):
-    annotations = deepmodels.PriceQuenchPrediction.annotate_sharpdrop(prices,
-                                                                      future_window=future_window,
-                                                                      drop_threshold=drop_threshold,
-                                                                      drop_window=drop_window,
-                                                                      percentage=percentage)
+    annotations = annotate_sharpdrop(prices,
+                                     future_window=future_window,
+                                     drop_threshold=drop_threshold,
+                                     drop_window=drop_window,
+                                     percentage=percentage)
     vectors, annots = wrangling_pricevector(prices,
                                             annotations,
                                             window_size=window_size,
