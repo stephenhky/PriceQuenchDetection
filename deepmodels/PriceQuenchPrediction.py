@@ -2,7 +2,7 @@ import numpy as np
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
-from evaluation import IRutils
+from evaluation import irutils
 
 # default parameters
 def_annotation_params = {'future_window': 10,        # number of days to include
@@ -127,7 +127,7 @@ def evaluate(prices, model,
                           drop_window=drop_window,
                           percentage=percentage)
     print "tp = ", ir_counts['tp'], "fp = ", ir_counts['fp'], "fn = ", ir_counts['fn'], "tn = ", ir_counts['tn']
-    ir_measures = IRutils.calculate_IR(**ir_counts)
+    ir_measures = irutils.calculate_IR(**ir_counts)
     print "recall = ", ir_measures['recall']
     print "precision = ", ir_measures['precision']
     print "F-score = ", ir_measures['fscore']
