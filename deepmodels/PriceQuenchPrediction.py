@@ -5,9 +5,9 @@ from keras.models import Sequential
 from evaluation import irutils
 
 # default parameters
-def_annotation_params = {'future_window': 10,        # number of days to include
+def_annotation_params = {'future_window': 5,        # number of days to include
                          'drop_threshold': 0.01,     # drop threshold
-                         'drop_window': 5,           # drop window
+                         'drop_window': 2,           # drop window
                          'use_percentage': True}     # use percentage if True; otherwise, absolute number
 def_prediction_params = {'window_size': 20,
                          'divide_threshold': 0.5}
@@ -97,10 +97,7 @@ def counts_pn(prices, model,
     predprobs = map(lambda pr: pricequench_predict(pr, model), vectors)
     predlabels = map(int, map(lambda elem: elem[0][0]>divide_threshold, predprobs))
 
-    tp = 0
-    fp = 0
-    fn = 0
-    tn = 0
+    tp = fp = fn = tn = 0
     for expannot, predannot in zip(annots, predlabels):
         if expannot==1 and predannot==1:
             tp += 1
