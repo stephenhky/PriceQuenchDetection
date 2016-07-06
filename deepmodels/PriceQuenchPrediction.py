@@ -132,10 +132,33 @@ def evaluate(prices, model,
     print "precision = ", ir_measures['precision']
     print "F-score = ", ir_measures['fscore']
 
-def evaluate_AUC(prices, model,
+def evaluate_AUC(prices, model, score_thresholds=None,
                  window_size=def_prediction_params['window_size'],
                  future_window=def_annotation_params['future_window'],
                  drop_threshold=def_annotation_params['drop_threshold'],
                  drop_window=def_annotation_params['drop_window'],
                  percentage=def_annotation_params['use_percentage']):
-    pass
+    if score_thresholds==None:
+        score_thresholds = np.linspace(0.0, 1.0, 101)
+    recalls = []
+    precisions = []
+    for threshold in score_thresholds:
+        ir_measures = irutils.calculate_IR(**counts_pn(prices, model,
+                                                       divide_threshold=threshold,
+                                                       window_size=window_size,
+                                                       future_window=future_window,
+                                                       drop_threshold=drop_threshold,
+                                                       drop_window=drop_window,
+                                                       percentage=percentage
+                                                       )
+                                           )
+        recalls.append(ir_measures['recall'])
+        precisions.append(ir_measures['precision'])
+
+    recalls = np.array(recalls)
+    precisions = np.array(precisions)
+    evaluation_results = {'score_thresholds': score_thresholds,
+                          'recalls': recalls,
+                          'precisions': precisions,
+                          'AUC': irutils.calculate_AUC(recalls, precisions)}
+    return evaluation_results

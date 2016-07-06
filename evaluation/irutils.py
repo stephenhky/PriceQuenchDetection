@@ -1,6 +1,6 @@
 import numpy as np
 
-def calculate_IR(tp, fp, fn):
+def calculate_IR(tp, fp, fn, tn):
     # recall
     try:
         recall = float(tp)/(tp+fn)
