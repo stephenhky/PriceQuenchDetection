@@ -5,7 +5,7 @@ from keras.models import Sequential
 from evaluation import irutils
 
 # default parameters
-def_annotation_params = {'future_window': 5,        # number of days to include
+def_annotation_params = {'future_window': 5,         # number of days to include
                          'drop_threshold': 0.01,     # drop threshold
                          'drop_window': 2,           # drop window
                          'use_percentage': True}     # use percentage if True; otherwise, absolute number
