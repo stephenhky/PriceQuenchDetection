@@ -63,6 +63,7 @@ def train_prediction_model(prices,
     model.add(LSTM(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
+    # model.add(Activation('softmax'))
 
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
@@ -76,14 +77,13 @@ def pricequench_predict(prices, model):
     pr = np.reshape(pr, pr.shape+(1,))
     return model.predict(pr)
 
-def counts_pn(prices, model,
-              divide_threshold=def_prediction_params['divide_threshold'],
-              window_size=def_prediction_params['window_size'],
-              future_window=def_annotation_params['future_window'],
-              drop_threshold=def_annotation_params['drop_threshold'],
-              drop_window=def_annotation_params['drop_window'],
-              percentage=def_annotation_params['use_percentage']
-              ):
+def batch_pricequench_predict_int(prices, model,
+                                  window_size=def_prediction_params['window_size'],
+                                  future_window=def_annotation_params['future_window'],
+                                  drop_threshold=def_annotation_params['drop_threshold'],
+                                  drop_window=def_annotation_params['drop_window'],
+                                  percentage=def_annotation_params['use_percentage']
+                                 ):
     annotations = annotate_sharpdrop(prices,
                                      future_window=future_window,
                                      drop_threshold=drop_threshold,
@@ -93,11 +93,33 @@ def counts_pn(prices, model,
                                             annotations,
                                             window_size=window_size,
                                             future_window=future_window
-                                           )
-    predprobs = map(lambda pr: pricequench_predict(pr, model), vectors)
+                                            )
+    return {'vectors': vectors, 'wrangled_annotations': annots,
+            'predicted_score': map(lambda pr: pricequench_predict(pr, model), vectors)}
+
+
+def batch_pricequench_predict(*args, **kwargs):
+    return batch_pricequench_predict_int(*args, **kwargs)['predicted_score']
+
+def counts_pn(prices, model,
+              divide_threshold=def_prediction_params['divide_threshold'],
+              window_size=def_prediction_params['window_size'],
+              future_window=def_annotation_params['future_window'],
+              drop_threshold=def_annotation_params['drop_threshold'],
+              drop_window=def_annotation_params['drop_window'],
+              percentage=def_annotation_params['use_percentage']
+              ):
+    predpack  = batch_pricequench_predict_int(prices, model,
+                                              window_size=window_size,
+                                              future_window=future_window,
+                                              drop_threshold=drop_threshold,
+                                              drop_window=drop_window,
+                                              percentage=percentage)
+    predprobs = predpack['predicted_score']
     predlabels = map(int, map(lambda elem: elem[0][0]>divide_threshold, predprobs))
 
     tp = fp = fn = tn = 0
+    annots = predpack['wrangled_annotations']
     for expannot, predannot in zip(annots, predlabels):
         if expannot==1 and predannot==1:
             tp += 1
