@@ -2,6 +2,7 @@ import numpy as np
 from keras.layers.core import Dense, Activation
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
+from sklearn.preprocessing import normalize
 from evaluation import irutils
 
 # default parameters
@@ -35,9 +36,12 @@ def annotate_sharpdrop(prices,  # ndarray
 def wrangling_pricevector(prices,
                           annotation,
                           window_size=def_prediction_params['window_size'],
-                          future_window=def_annotation_params['future_window']
+                          future_window=def_annotation_params['future_window'],
+                          to_normalize=True
                          ):
     prices_vectors = np.array([prices[timeidx:(timeidx+window_size)] for timeidx in range(len(prices)-window_size-future_window)])
+    if to_normalize:
+        prices_vectors = normalize(prices_vectors)
     wrangled_annotations = np.array([annotation[timeidx+window_size-1] for timeidx in range(len(prices)-window_size-future_window)])
     return prices_vectors, wrangled_annotations
 
@@ -47,7 +51,8 @@ def train_prediction_model(prices,
                            drop_threshold=def_annotation_params['drop_threshold'],
                            drop_window=def_annotation_params['drop_window'],
                            percentage=def_annotation_params['use_percentage'],
-                           batch_size=32
+                           batch_size=32,
+                           to_normalize=True
                            ):
     annotations = annotate_sharpdrop(prices,
                                      future_window=future_window,
@@ -58,7 +63,7 @@ def train_prediction_model(prices,
                                                                  annotations,
                                                                  window_size=window_size,
                                                                  future_window=future_window)
-    prices_vectors = np.reshape(prices_vectors, prices_vectors.shape+(1,))
+    prices_vectors = np.reshape(prices_vectors, prices_vectors.shape+(1,), to_normalize=to_normalize)
     model = Sequential()
     model.add(LSTM(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
     model.add(Dense(1))
