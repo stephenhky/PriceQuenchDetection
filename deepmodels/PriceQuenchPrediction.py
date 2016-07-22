@@ -1,6 +1,6 @@
 import numpy as np
 from keras.layers.core import Dense, Activation
-from keras.layers.recurrent import LSTM, GRU
+from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from sklearn.preprocessing import normalize
 from evaluation import irutils
@@ -66,7 +66,7 @@ def train_prediction_model(prices,
                                                                  to_normalize=to_normalize)
     prices_vectors = np.reshape(prices_vectors, prices_vectors.shape+(1,))
     model = Sequential()
-    model.add(GRU(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
+    model.add(LSTM(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
     # model.add(Activation('softmax'))
