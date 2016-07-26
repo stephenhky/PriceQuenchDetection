@@ -18,8 +18,8 @@ def produce_bagging_models(prices, numbags=11, minority=1, batch_size=21, **prep
     for i in range(numbags):
         selected_majidx = np.random.randint(0, len_majority, len_minority)
         sampled_pairs = minority_pairs + map(lambda i: majority_pairs[i], selected_majidx)
-        sampled_prvecs = np.array(lambda pair: pair[0], sampled_pairs)
-        sampled_wranns = np.array(lambda pair: pair[1], sampled_pairs)
+        sampled_prvecs = np.array(map(lambda pair: pair[0], sampled_pairs))
+        sampled_wranns = np.array(map(lambda pair: pair[1], sampled_pairs))
         model = pqp.train_prediction_model_int(sampled_prvecs, sampled_wranns,
                                                window_size=window_size,
                                                batch_size=batch_size)
