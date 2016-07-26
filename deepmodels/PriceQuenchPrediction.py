@@ -45,15 +45,14 @@ def wrangling_pricevector(prices,
     wrangled_annotations = np.array([annotation[timeidx+window_size-1] for timeidx in range(len(prices)-window_size-future_window)])
     return prices_vectors, wrangled_annotations
 
-def train_prediction_model(prices,
-                           window_size=def_prediction_params['window_size'],
-                           future_window=def_annotation_params['future_window'],
-                           drop_threshold=def_annotation_params['drop_threshold'],
-                           drop_window=def_annotation_params['drop_window'],
-                           percentage=def_annotation_params['use_percentage'],
-                           batch_size=32,
-                           to_normalize=True
-                           ):
+def preprocess_trainingdata(prices,
+                            window_size=def_prediction_params['window_size'],
+                            future_window=def_annotation_params['future_window'],
+                            drop_threshold=def_annotation_params['drop_threshold'],
+                            drop_window=def_annotation_params['drop_window'],
+                            percentage=def_annotation_params['use_percentage'],
+                            to_normalize=True,
+                            use_keras=True):
     annotations = annotate_sharpdrop(prices,
                                      future_window=future_window,
                                      drop_threshold=drop_threshold,
@@ -64,7 +63,14 @@ def train_prediction_model(prices,
                                                                  window_size=window_size,
                                                                  future_window=future_window,
                                                                  to_normalize=to_normalize)
-    prices_vectors = np.reshape(prices_vectors, prices_vectors.shape+(1,))
+    if use_keras:
+        prices_vectors = np.reshape(prices_vectors, prices_vectors.shape + (1,))
+    return prices_vectors, wrangled_annotations
+
+def train_prediction_model_int(prices_vectors,
+                               wrangled_annotations,
+                               window_size=def_prediction_params['window_size'],
+                               batch_size=32):
     model = Sequential()
     model.add(LSTM(window_size, input_shape=prices_vectors.shape[1:], dropout_W=0.2, dropout_U=0.2))
     model.add(Dense(1))
@@ -76,6 +82,28 @@ def train_prediction_model(prices,
     model.fit(prices_vectors, wrangled_annotations,
               batch_size=batch_size, nb_epoch=15)
 
+    return model
+
+def train_prediction_model(prices,
+                           window_size=def_prediction_params['window_size'],
+                           future_window=def_annotation_params['future_window'],
+                           drop_threshold=def_annotation_params['drop_threshold'],
+                           drop_window=def_annotation_params['drop_window'],
+                           percentage=def_annotation_params['use_percentage'],
+                           batch_size=32,
+                           to_normalize=True
+                           ):
+    prices_vectors, wrangled_annotations = preprocess_trainingdata(prices,
+                                                                   window_size=window_size,
+                                                                   future_window=future_window,
+                                                                   drop_threshold=drop_threshold,
+                                                                   drop_window=drop_window,
+                                                                   percentage=percentage,
+                                                                   to_normalize=to_normalize,
+                                                                   use_keras=True)
+    model = train_prediction_model_int(prices_vectors, wrangled_annotations,
+                                       window_size=window_size,
+                                       batch_size=batch_size)
     return model
 
 def pricequench_predict(prices, model):
