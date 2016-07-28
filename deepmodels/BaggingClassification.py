@@ -1,5 +1,6 @@
 import PriceQuenchPrediction as pqp
 import numpy as np
+from sklearn import linear_model
 
 def produce_bagging_models(prices, numbags=11, minority=1, batch_size=21, **preprocess_params):
     # preprocess the training data
@@ -33,7 +34,7 @@ def batch_pricequenchmodels_prediction(prices, models,
                                        window_size=pqp.def_prediction_params['window_size'],
                                        future_window=pqp.def_annotation_params['future_window'],
                                        to_normalize=True
-                                      ):
+                                       ):
     prices_vectors = pqp.wrangling_pricevector(prices,
                                                window_size=window_size,
                                                future_window=future_window,
@@ -41,4 +42,9 @@ def batch_pricequenchmodels_prediction(prices, models,
     prediction_matrix = np.array(map(lambda model: map(lambda price: pqp.pricequench_predict(price, model), prices_vectors), models))
     prediction_matrix = np.reshape(prediction_matrix, prediction_matrix.shape[:2])
     return prediction_matrix
+
+def pricequenchmodels_logistic_model(prediction_matrix, annotations, **logregparam):
+    logreg = linear_model.LogisticRegression(**logregparam)
+    logreg.fit(np.transpose(prediction_matrix), annotations)
+    return logreg
 
