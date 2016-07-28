@@ -28,3 +28,17 @@ def produce_bagging_models(prices, numbags=11, minority=1, batch_size=21, **prep
 
     # return
     return {'models': models, 'selected_indices': choices}
+
+def batch_pricequenchmodels_prediction(prices, models,
+                                       window_size=pqp.def_prediction_params['window_size'],
+                                       future_window=pqp.def_annotation_params['future_window'],
+                                       to_normalize=True
+                                      ):
+    prices_vectors = pqp.wrangling_pricevector(prices,
+                                               window_size=window_size,
+                                               future_window=future_window,
+                                               to_normalize=to_normalize)
+    prediction_matrix = np.array(map(lambda model: map(lambda price: pqp.pricequench_predict(price, model), prices_vectors), models))
+    prediction_matrix = np.reshape(prediction_matrix, prediction_matrix.shape[:2])
+    return prediction_matrix
+

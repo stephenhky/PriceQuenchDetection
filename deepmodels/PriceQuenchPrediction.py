@@ -32,16 +32,27 @@ def annotate_sharpdrop(prices,  # ndarray
         flags[idx] = flag
     return flags
 
-
 def wrangling_pricevector(prices,
-                          annotation,
                           window_size=def_prediction_params['window_size'],
                           future_window=def_annotation_params['future_window'],
                           to_normalize=True
-                         ):
+                          ):
     prices_vectors = np.array([prices[timeidx:(timeidx+window_size)] for timeidx in range(len(prices)-window_size-future_window)])
     if to_normalize:
         prices_vectors = normalize(prices_vectors)
+    return prices_vectors
+
+def wrangling_pricevector_annotations(prices,
+                                      annotation,
+                                      window_size=def_prediction_params['window_size'],
+                                      future_window=def_annotation_params['future_window'],
+                                      to_normalize=True
+                                      ):
+    prices_vectors = wrangling_pricevector(prices,
+                                           window_size=window_size,
+                                           future_window=future_window,
+                                           to_normalize=to_normalize
+                                           )
     wrangled_annotations = np.array([annotation[timeidx+window_size-1] for timeidx in range(len(prices)-window_size-future_window)])
     return prices_vectors, wrangled_annotations
 
@@ -58,11 +69,11 @@ def preprocess_trainingdata(prices,
                                      drop_threshold=drop_threshold,
                                      drop_window=drop_window,
                                      percentage=percentage)
-    prices_vectors, wrangled_annotations = wrangling_pricevector(prices,
-                                                                 annotations,
-                                                                 window_size=window_size,
-                                                                 future_window=future_window,
-                                                                 to_normalize=to_normalize)
+    prices_vectors, wrangled_annotations = wrangling_pricevector_annotations(prices,
+                                                                             annotations,
+                                                                             window_size=window_size,
+                                                                             future_window=future_window,
+                                                                             to_normalize=to_normalize)
     if use_keras:
         prices_vectors = np.reshape(prices_vectors, prices_vectors.shape + (1,))
     return prices_vectors, wrangled_annotations
@@ -106,9 +117,12 @@ def train_prediction_model(prices,
                                        batch_size=batch_size)
     return model
 
-def pricequench_predict(prices, model):
+# toreshape is default to be True;
+# but if the prices vectors have already been properly preprocessed, set toreshape=False
+def pricequench_predict(prices, model, toreshape=True):
     pr = np.array([prices])
-    pr = np.reshape(pr, pr.shape+(1,))
+    if toreshape:
+        pr = np.reshape(pr, pr.shape+(1,))
     return model.predict(pr)
 
 def batch_pricequench_predict_int(prices, model,
@@ -123,11 +137,11 @@ def batch_pricequench_predict_int(prices, model,
                                      drop_threshold=drop_threshold,
                                      drop_window=drop_window,
                                      percentage=percentage)
-    vectors, annots = wrangling_pricevector(prices,
-                                            annotations,
-                                            window_size=window_size,
-                                            future_window=future_window
-                                            )
+    vectors, annots = wrangling_pricevector_annotations(prices,
+                                                        annotations,
+                                                        window_size=window_size,
+                                                        future_window=future_window
+                                                        )
     return {'vectors': vectors, 'wrangled_annotations': annots,
             'predicted_score': map(lambda pr: pricequench_predict(pr, model), vectors)}
 
